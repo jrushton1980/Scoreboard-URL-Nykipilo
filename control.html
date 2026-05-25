@@ -4,51 +4,372 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Scoreboard Control</title>
+
 <style>
-  body { background-color: #111; color: #fff; font-family: Arial, sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
-  .scoreboard { width: 95%; background: #1e1e1e; border-radius: 12px; padding: 10px; margin-bottom: 12px; text-align: center; }
-  .team-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 18px; }
-  .score-row { display: flex; justify-content: space-between; font-size: 36px; margin-top: 6px; }
-  .shots-row { display: flex; justify-content: space-between; font-size: 16px; margin-top: 4px; opacity: 0.85; }
-  .clock-section { display: flex; justify-content: space-between; align-items: center; width: 95%; background: #1d1d1d; border-radius: 12px; padding: 10px; margin-bottom: 12px; }
-  .clock-section button { flex: 1; font-size: 18px; padding: 14px 0; margin: 0 4px; border-radius: 8px; border: none; background-color: #333; color: #fff; cursor: pointer; }
-  #timer { font-size: 28px; font-weight: bold; text-align: center; }
-  #period { font-size: 18px; text-align: center; margin-top: 2px; }
-  #startStopBtn { width: 95%; font-size: 28px; padding: 40px 0; border-radius: 12px; border: none; color: white; background-color: #28a745; margin-bottom: 16px; }
-  .team-controls { display: flex; justify-content: space-between; width: 95%; gap: 10px; }
-  .team-column { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-  .team-column button.plus { width: 100%; font-size: 24px; padding: 40px 0; border-radius: 10px; border: none; background-color: #555; color: #fff; }
-  .team-column button.minus { width: 100%; font-size: 24px; padding: 12px 0; border-radius: 10px; border: none; background-color: #777; color: #fff; }
-  .settings-btn { position: fixed; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
-  .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
-  .modal-content { background: #222; padding: 20px; border-radius: 10px; width: 90%; max-width: 500px; text-align: center; }
-  .modal h2 { margin-bottom: 20px; }
-  .modal-section { display: flex; justify-content: space-between; gap: 10px; }
-  .team-setup { flex: 1; }
-  select, input { width: 100%; padding: 8px; margin-top: 6px; border-radius: 6px; border: none; }
-  input:disabled { background-color: #444; color: #aaa; }
-  .modal-buttons { margin-top: 20px; display: flex; justify-content: space-around; }
-  .modal-buttons button { padding: 10px 20px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
-  .update-btn { background-color: #28a745; color: #fff; }
-  .cancel-btn { background-color: #555; color: #fff; }
+body {
+  background-color: #111;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* SETTINGS BUTTON */
+.settings-btn {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 28px;
+  z-index: 9999;
+  cursor: pointer;
+}
+
+/* SCOREBOARD */
+.scoreboard {
+  width: 95%;
+  background: #1e1e1e;
+  border-radius: 12px;
+  padding: 12px 10px;
+  margin-bottom: 12px;
+}
+
+.team-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.team-block {
+  width: 45%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.team-name {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+/* TEAM LOGO TOGGLE LAYOUT */
+.logo-container {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.team-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: #222;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Hidden PP badge style by default */
+.pp-badge {
+  display: none;
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: #ffd700;
+  color: #000;
+  font-weight: bold;
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 10px;
+  border: 1px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  z-index: 10;
+}
+
+/* Active Styling States for PP Toggle */
+.logo-container.active .team-logo {
+  border: 3px solid #ffd700;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.logo-container.active .pp-badge {
+  display: block;
+}
+
+.team-score {
+  font-size: 40px;
+  font-weight: bold;
+}
+
+.team-shots {
+  font-size: 20px;
+  opacity: 0.9;
+}
+
+/* BUTTON FEEDBACK */
+button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform 0.04s ease, opacity 0.04s ease;
+}
+
+button:active {
+  transform: scale(0.90);
+  opacity: 0.7;
+}
+
+/* CLOCK */
+.clock-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 95%;
+  background: #1d1d1d;
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+
+.clock-section button {
+  flex: 1;
+  font-size: 18px;
+  padding: 14px 0;
+  margin: 0 4px;
+  border-radius: 8px;
+  border: none;
+  background-color: #333;
+  color: #fff;
+}
+
+#timer {
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+}
+
+#period {
+  font-size: 18px;
+  text-align: center;
+}
+
+/* START BUTTON */
+#startStopBtn {
+  width: 95%;
+  font-size: 28px;
+  padding: 40px 0;
+  border-radius: 12px;
+  border: none;
+  color: white;
+  background-color: #28a745;
+  margin-bottom: 16px;
+}
+
+/* PULSE */
+.pulse {
+  animation: pulseAnim 1.2s infinite;
+}
+
+@keyframes pulseAnim {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* CONTROLS */
+.team-controls {
+  display: flex;
+  justify-content: space-between;
+  width: 95%;
+  gap: 10px;
+}
+
+.team-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.team-column button.plus {
+  font-size: 24px;
+  padding: 40px 0;
+  border-radius: 10px;
+  border: none;
+  background-color: #555;
+  color: #fff;
+}
+
+.team-column button.minus {
+  font-size: 24px;
+  padding: 12px 0;
+  border-radius: 10px;
+  border: none;
+  background-color: #777;
+  color: #fff;
+}
+
+/* ANIMATIONS */
+.score-pop {
+  animation: pop 0.25s ease;
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+.flash-green {
+  animation: flashGreen 1s ease;
+  font-weight: bold;
+}
+
+.flash-red {
+  animation: flashRed 1s ease;
+  font-weight: bold;
+}
+
+@keyframes flashGreen {
+  0% { color: #fff; }
+  40% { color: #28a745; }
+  100% { color: #fff; }
+}
+
+@keyframes flashRed {
+  0% { color: #fff; }
+  40% { color: #dc3545; }
+  100% { color: #fff; }
+}
+
+/* SETTINGS MODAL */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #222;
+  padding: 20px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 500px;
+  text-align: center;
+}
+
+.modal-section {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.team-setup {
+  flex: 1;
+}
+
+select, input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 6px;
+  border-radius: 6px;
+  border: none;
+}
+
+input:disabled {
+  background-color: #444;
+  color: #aaa;
+}
+
+.modal-buttons {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.modal-buttons button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.update-btn {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.cancel-btn {
+  background-color: #555;
+  color: #fff;
+}
+
+.reset-btn {
+  background-color: #dc3545;
+  color: #fff;
+}
 </style>
 </head>
+
 <body>
+
 <button class="settings-btn" onclick="openSettings()">⚙️</button>
 
 <div class="scoreboard">
+
   <div class="team-row">
-    <span id="teamAName">Team A</span>
-    <span id="teamBName">Team B</span>
-  </div>
-  <div class="score-row">
-    <span id="teamAScore">0</span>
-    <span style="opacity:0.8;">-</span>
-    <span id="teamBScore">0</span>
-  </div>
-  <div class="shots-row">
-    <span id="teamAShots">Shots: 0</span>
-    <span id="teamBShots">Shots: 0</span>
+
+    <!-- TEAM A -->
+    <div class="team-block">
+      <div id="teamAName" class="team-name">Team A</div>
+      
+      <!-- Interactive Logo Container for Team A -->
+      <div id="teamAContainer" class="logo-container" onclick="togglePP('A')">
+        <img id="teamALogo" class="team-logo" src="">
+        <span class="pp-badge">PP</span>
+      </div>
+
+      <div id="teamAScore" class="team-score">0</div>
+      <div id="teamAShots" class="team-shots">Shots: 0</div>
+    </div>
+
+    <!-- DASH -->
+    <div style="font-size:32px; padding-top:90px;">-</div>
+
+    <!-- TEAM B -->
+    <div class="team-block">
+      <div id="teamBName" class="team-name">Team B</div>
+      
+      <!-- Interactive Logo Container for Team B -->
+      <div id="teamBContainer" class="logo-container" onclick="togglePP('B')">
+        <img id="teamBLogo" class="team-logo" src="">
+        <span class="pp-badge">PP</span>
+      </div>
+
+      <div id="teamBScore" class="team-score">0</div>
+      <div id="teamBShots" class="team-shots">Shots: 0</div>
+    </div>
+
   </div>
 </div>
 
@@ -64,20 +385,24 @@
 <button id="startStopBtn" onclick="toggleClock()">Start</button>
 
 <div class="team-controls">
+
   <div class="team-column">
     <button class="plus" onclick="updateShots('A',1)">+1 Shot</button>
     <button class="minus" onclick="updateShots('A',-1)">-1 Shot</button>
     <button class="plus" onclick="updateScore('A',1)">+1 Goal</button>
     <button class="minus" onclick="updateScore('A',-1)">-1 Goal</button>
   </div>
+
   <div class="team-column">
     <button class="plus" onclick="updateShots('B',1)">+1 Shot</button>
     <button class="minus" onclick="updateShots('B',-1)">-1 Shot</button>
     <button class="plus" onclick="updateScore('B',1)">+1 Goal</button>
     <button class="minus" onclick="updateScore('B',-1)">-1 Goal</button>
   </div>
+
 </div>
 
+<!-- SETTINGS MODAL -->
 <div id="settingsModal" class="modal">
   <div class="modal-content">
     <h2>Team Setup</h2>
@@ -96,143 +421,301 @@
     <div class="modal-buttons">
       <button class="update-btn" onclick="updateTeams()">Update</button>
       <button class="cancel-btn" onclick="closeSettings()">Cancel</button>
+      <button class="reset-btn" onclick="resetGame()">Reset Game</button>
     </div>
   </div>
 </div>
 
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBHsE5JxfutggE53uMRswYA8DSyXNCP2-SMguI0SlgssaYDZOSPikGukIu6V2TDvQUVA/exec";
+ 
+let state = {
+  teamAName:"Team A",
+  teamAScore:0,
+  teamAShots:0,
+  teamALogo:"",
+  teamA_pp: false, // Maps exactly to Google Sheet field layout
+  teamBName:"Team B",
+  teamBScore:0,
+  teamBShots:0,
+  teamBLogo:"",
+  teamB_pp: false, // Maps exactly to Google Sheet field layout
+  Period:1,
+  TimerSeconds:1200,
+  Running:false
+};
 
-let state = {teamAName:"Team A", teamAScore:0, teamAShots:0, teamBName:"Team B", teamBScore:0, teamBShots:0, Period:1, TimerSeconds:1200, Running:false};
 let timerInterval;
 
-// --- Initialization ---
-async function init(){
-  try{
-    const res = await fetch(SCRIPT_URL);
-    const data = await res.json();
-    Object.assign(state,data);
-    updateUI();
-    await loadTeamList();
+/* SETTINGS */
+function openSettings(){
+  document.getElementById("settingsModal").style.display = "flex";
+}
+
+function closeSettings(){
+  document.getElementById("settingsModal").style.display = "none";
+}
+
+/* TEAM LIST */
+async function loadTeamList(){
+  try {
+    const res = await fetch(`${SCRIPT_URL}?list=true&t=${Date.now()}`);
+    const list = await res.json();
+    const uniqueList = [...new Set(list)];
+
+    ["A","B"].forEach(team=>{
+      const dd = document.getElementById(`team${team}Dropdown`);
+      dd.innerHTML = "";
+
+      const customOpt = document.createElement("option");
+      customOpt.value = "__custom__";
+      customOpt.textContent = "-- Custom --";
+      dd.appendChild(customOpt);
+
+      uniqueList.forEach(teamName=>{
+        if(teamName !== "-- Custom --"){
+          const opt = document.createElement("option");
+          opt.value = teamName;
+          opt.textContent = teamName;
+          dd.appendChild(opt);
+        }
+      });
+    });
     preselectTeams();
-  } catch(err){ console.error("Init failed:",err); updateUI(); await loadTeamList(); }
+  } catch(err){
+    console.error("Failed loading team list", err);
+  }
 }
 
-// --- Update UI ---
-function updateUI(){
-  document.getElementById('teamAName').textContent=state.teamAName;
-  document.getElementById('teamBName').textContent=state.teamBName;
-  document.getElementById('teamAScore').textContent=state.teamAScore;
-  document.getElementById('teamBScore').textContent=state.teamBScore;
-  document.getElementById('teamAShots').textContent=`Shots: ${state.teamAShots}`;
-  document.getElementById('teamBShots').textContent=`Shots: ${state.teamBShots}`;
-  document.getElementById('timer').textContent=formatTime(state.TimerSeconds);
-  document.getElementById('period').textContent=`Period ${state.Period}`;
-  const btn=document.getElementById('startStopBtn');
-  btn.textContent=state.Running?"Stop":"Start";
-  btn.style.backgroundColor=state.Running?"#dc3545":"#28a745";
+function handleDropdownChange(team){
+  const dd = document.getElementById(`team${team}Dropdown`);
+  const input = document.getElementById(`team${team}Custom`);
+  input.disabled = dd.value !== "__custom__";
 }
 
-// --- Format MM:SS ---
-function formatTime(sec){ const m=Math.floor(sec/60); const s=sec%60; return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
+function preselectTeams(){
+  ["A","B"].forEach(team=>{
+    const dd = document.getElementById(`team${team}Dropdown`);
+    const input = document.getElementById(`team${team}Custom`);
+    const current = state[team==="A" ? "teamAName" : "teamBName"];
+    let found = false;
 
-// --- Timer ---
-function toggleClock(){
-  state.Running=!state.Running;
-  if(state.Running) startTimer(); else stopTimer();
+    for(let i=0;i<dd.options.length;i++){
+      if(dd.options[i].value === current){
+        dd.selectedIndex = i;
+        found = true;
+        break;
+      }
+    }
+
+    if(!found){
+      dd.value = "__custom__";
+      input.value = current;
+      input.disabled = false;
+    } else {
+      input.disabled = dd.value !== "__custom__";
+    }
+  });
+}
+
+function updateTeams(){
+  ["A","B"].forEach(team=>{
+    const dd = document.getElementById(`team${team}Dropdown`);
+    const input = document.getElementById(`team${team}Custom`);
+    const name = dd.value === "__custom__" ? input.value.trim() : dd.value;
+
+    if(!name) return;
+    const field = team==="A" ? "teamAName" : "teamBName";
+    state[field] = name;
+    pushUpdate(field, name);
+  });
+
   updateUI();
-  pushUpdate("Running",state.Running);
-  pushUpdate("TimerSeconds",state.TimerSeconds);
+  closeSettings();
 }
-function startTimer(){
-  if(timerInterval) clearInterval(timerInterval);
-  timerInterval=setInterval(()=>{
-    if(state.TimerSeconds>0){ state.TimerSeconds--; document.getElementById('timer').textContent=formatTime(state.TimerSeconds); pushUpdate("TimerSeconds",state.TimerSeconds); }
-    else{ stopTimer(); state.Running=false; updateUI(); pushUpdate("Running",false); }
+
+/* RESET GAME */
+function resetGame(){
+  stopTimer();
+
+  state.teamAScore = 0;
+  state.teamBScore = 0;
+  state.teamAShots = 0;
+  state.teamBShots = 0;
+  state.teamA_pp = false;
+  state.teamB_pp = false;
+  state.Period = 1;
+  state.TimerSeconds = 900;
+  state.Running = false;
+
+  updateUI();
+
+  pushUpdate("teamAScore",0);
+  pushUpdate("teamBScore",0);
+  pushUpdate("teamAShots",0);
+  pushUpdate("teamBShots",0);
+  pushUpdate("teamA_pp",false);
+  pushUpdate("teamB_pp",false);
+  pushUpdate("Period",1);
+  pushUpdate("TimerSeconds",900);
+  pushUpdate("Running",false);
+
+  closeSettings();
+}
+
+/* ANIMATIONS */
+function animateValue(id, change){
+  const el = document.getElementById(id);
+  el.classList.remove("score-pop","flash-green","flash-red");
+  void el.offsetWidth;
+
+  el.classList.add("score-pop");
+  el.classList.add(change > 0 ? "flash-green" : "flash-red");
+
+  setTimeout(()=>{
+    el.classList.remove("flash-green","flash-red");
   },1000);
 }
-function stopTimer(){ clearInterval(timerInterval); }
 
-// --- Clock input ---
+/* UI */
+function updateUI(){
+  document.getElementById('teamAName').textContent = state.teamAName;
+  document.getElementById('teamBName').textContent = state.teamBName;
+
+  document.getElementById('teamAScore').textContent = state.teamAScore;
+  document.getElementById('teamBScore').textContent = state.teamBScore;
+
+  document.getElementById('teamAShots').textContent = `Shots: ${state.teamAShots}`;
+  document.getElementById('teamBShots').textContent = `Shots: ${state.teamBShots}`;
+
+  document.getElementById('teamALogo').src = state.teamALogo || "";
+  document.getElementById('teamBLogo').src = state.teamBLogo || "";
+
+  // Dynamic visual application flags for PP border and upper-right corner badge elements
+  document.getElementById('teamAContainer').classList.toggle('active', state.teamA_pp === true || state.teamA_pp === "true");
+  document.getElementById('teamBContainer').classList.toggle('active', state.teamB_pp === true || state.teamB_pp === "true");
+
+  document.getElementById('timer').textContent = formatTime(state.TimerSeconds);
+  document.getElementById('period').textContent = `Period ${state.Period}`;
+
+  const btn = document.getElementById('startStopBtn');
+  btn.textContent = state.Running ? "Stop" : "Start";
+  btn.style.backgroundColor = state.Running ? "#dc3545" : "#28a745";
+  btn.classList.toggle("pulse", state.Running);
+}
+
+function formatTime(sec){
+  const m = Math.floor(sec/60);
+  const s = sec%60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+/* PP TOGGLE HANDLER */
+function togglePP(team) {
+  const key = team === "A" ? "teamA_pp" : "teamB_pp";
+  
+  // Inverse current status inside your state object memory
+  state[key] = !state[key];
+  
+  // Instantly re-render visual components locally
+  updateUI();
+  
+  // Push modification natively using your sheet url variables
+  pushUpdate(key, state[key]);
+}
+
+/* TIMER */
+function toggleClock(){
+  state.Running = !state.Running;
+
+  if(state.Running){
+    startTimer();
+  } else {
+    stopTimer();
+  }
+
+  updateUI();
+  pushUpdate("Running",state.Running);
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  timerInterval = setInterval(()=>{
+    if(state.TimerSeconds > 0){
+      state.TimerSeconds--;
+      document.getElementById('timer').textContent = formatTime(state.TimerSeconds);
+      pushUpdate("TimerSeconds",state.TimerSeconds);
+    }
+  },1000);
+}
+
+function stopTimer(){
+  clearInterval(timerInterval);
+}
+
+/* CONTROLS */
 function setClock(){
-  const input=prompt("Enter time (MM:SS):");
+  const input = prompt("Enter time (MM:SS):");
   if(input && /^\d{1,2}:\d{2}$/.test(input)){
-    const [m,s]=input.split(':').map(Number);
-    state.TimerSeconds=m*60+s;
+    const [m,s] = input.split(':').map(Number);
+    state.TimerSeconds = m*60+s;
     updateUI();
     pushUpdate("TimerSeconds",state.TimerSeconds);
   }
 }
 
-// --- Period input ---
 function setPeriod(){
-  const val=parseInt(prompt("Enter period number:"));
-  if(!isNaN(val)&&val>0){ state.Period=val; updateUI(); pushUpdate("Period",val); }
+  const val = parseInt(prompt("Enter period number:"));
+  if(!isNaN(val) && val > 0){
+    state.Period = val;
+    updateUI();
+    pushUpdate("Period",val);
+  }
 }
 
-// --- Scores / Shots ---
-function updateScore(team,change){ const key=team==="A"?"teamAScore":"teamBScore"; state[key]=Math.max(0,state[key]+change); updateUI(); pushUpdate(key,state[key]); }
-function updateShots(team,change){ const key=team==="A"?"teamAShots":"teamBShots"; state[key]=Math.max(0,state[key]+change); updateUI(); pushUpdate(key,state[key]); }
+function updateScore(team,change){
+  const key = team==="A" ? "teamAScore" : "teamBScore";
+  const el = team==="A" ? "teamAScore" : "teamBScore";
 
-// --- Push updates ---
-async function pushUpdate(field,value){ await fetch(`${SCRIPT_URL}?update=true&field=${field}&value=${encodeURIComponent(value)}`); }
-
-// --- Settings ---
-function openSettings(){ document.getElementById("settingsModal").style.display="flex"; }
-function closeSettings(){ document.getElementById("settingsModal").style.display="none"; }
-
-// --- Load team list ---
-async function loadTeamList(){
-  const res=await fetch(`${SCRIPT_URL}?list=true`);
-  const list=await res.json();
-  const ddA=document.getElementById("teamADropdown");
-  const ddB=document.getElementById("teamBDropdown");
-  [ddA,ddB].forEach(dd=>{
-    dd.innerHTML="";
-    const optCustom=document.createElement("option");
-    optCustom.textContent="-- Custom --";
-    dd.appendChild(optCustom);
-    // Remove duplicates
-    const uniqueList=[...new Set(list)];
-    uniqueList.forEach(team=>{ const opt=document.createElement("option"); opt.textContent=team; dd.appendChild(opt); });
-  });
+  state[key] = Math.max(0,state[key]+change);
+  updateUI();
+  animateValue(el,change);
+  pushUpdate(key,state[key]);
 }
 
-// --- Dropdown change ---
-function handleDropdownChange(team){
-  const dd=document.getElementById(`team${team}Dropdown`);
-  const input=document.getElementById(`team${team}Custom`);
-  input.disabled=dd.value!=="-- Custom --";
+function updateShots(team,change){
+  const key = team==="A" ? "teamAShots" : "teamBShots";
+  const el = team==="A" ? "teamAShots" : "teamBShots";
+
+  state[key] = Math.max(0,state[key]+change);
+  updateUI();
+  animateValue(el,change);
+  pushUpdate(key,state[key]);
 }
 
-// --- Update teams ---
-function updateTeams(){
-  ["A","B"].forEach(team=>{
-    const dd=document.getElementById(`team${team}Dropdown`);
-    const input=document.getElementById(`team${team}Custom`);
-    const name=dd.value==="-- Custom --"?input.value.trim():dd.value;
-    if(!name){ alert("Custom team field is blank"); return; }
-    const field=team==="A"?"teamAName":"teamBName";
-    state[field]=name;
-    pushUpdate(field,name);
-  });
-  updateUI(); closeSettings();
+/* GOOGLE SYNC */
+async function pushUpdate(field,value){
+  await fetch(
+    `${SCRIPT_URL}?update=true&field=${field}&value=${encodeURIComponent(value)}`
+  );
 }
 
-// --- Preselect ---
-function preselectTeams(){
-  ["A","B"].forEach(team=>{
-    const dd=document.getElementById(`team${team}Dropdown`);
-    const input=document.getElementById(`team${team}Custom`);
-    const current=state[team==="A"?"teamAName":"teamBName"];
-    let found=false;
-    for(let i=0;i<dd.options.length;i++){ if(dd.options[i].value===current){ dd.selectedIndex=i; found=true; break; } }
-    if(!found){ dd.selectedIndex=0; input.value=current; input.disabled=false; }
-    else{ input.value=current; input.disabled=dd.value!=="-- Custom --"; }
-  });
+/* INIT */
+async function init(){
+  try {
+    const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
+    const data = await res.json();
+    Object.assign(state,data);
+  } catch(e){
+    console.error("Init failed", e);
+  }
+
+  updateUI();
+  await loadTeamList();
 }
 
 init();
 </script>
+
 </body>
 </html>
