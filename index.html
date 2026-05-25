@@ -44,6 +44,8 @@ body {
   border-radius:15px; 
   padding:10px 15px; 
   z-index:1; 
+  /* Removed layout-shrinking borders from baseline card state */
+  transition: outline 0.2s ease, box-shadow 0.2s ease;
 }
 
 .team-info { 
@@ -52,14 +54,61 @@ body {
   justify-content:center; 
   flex-grow:1; 
   margin-left:10px; 
+  overflow: hidden;
+}
+
+/* LOGO WRAPPER AND FLAG FORMATTING */
+.logo-container {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0; 
 }
 
 .team-logo { 
-  width:60px; 
-  height:60px; 
+  width:100%; 
+  height:100%; 
   border-radius:50%; 
   object-fit:cover; 
   border:2px solid #fff; 
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pp-badge {
+  display: none;
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  background-color: #ffd700;
+  color: #000;
+  font-weight: bold;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 10px;
+  border: 1px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  z-index: 10;
+}
+
+/* --- ACTIVE STATE STYLES (Power Play) --- */
+
+/* 1. Entire Card Frame Yellow Outline (Uses outline to preserve strict baseline card sizing) */
+.team-card.active {
+  outline: 2px solid #ffd700;
+  outline-offset: -2px; /* Pulls outline cleanly onto the edge radius */
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+}
+
+/* 2. Team Circle Logo Yellow Border Outline */
+.logo-container.active .team-logo {
+  border-color: #ffd700;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+}
+
+/* 3. Reveal PP Badge */
+.logo-container.active .pp-badge {
+  display: block;
 }
 
 .team-name { 
@@ -67,6 +116,9 @@ body {
   font-size: var(--font-team-name-size); 
   font-weight:bold; 
   color:#fff; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; 
 }
 
 .shots { 
@@ -118,14 +170,20 @@ body {
 </head>
 <body>
 <div class="scoreboard-wrapper">
+  
+  <!-- TEAM A CARD -->
   <div class="team-card" id="teamAcard">
-    <img class="team-logo" id="teamALogo">
+    <div id="teamAContainer" class="logo-container">
+      <img class="team-logo" id="teamALogo">
+      <span class="pp-badge">PP</span>
+    </div>
     <div class="team-info">
       <div class="team-name" id="teamAName"></div>
       <div class="shots" id="teamAShots"></div>
     </div>
   </div>
 
+  <!-- CENTRAL SCORE DISPLAY -->
   <div class="central-score">
     <div class="score-row">
       <span id="scoreA">0</span>
@@ -135,8 +193,12 @@ body {
     <div class="period-clock" id="periodClock">20:00 | Per 1</div>
   </div>
 
+  <!-- TEAM B CARD -->
   <div class="team-card" id="teamBcard">
-    <img class="team-logo" id="teamBLogo">
+    <div id="teamBContainer" class="logo-container">
+      <img class="team-logo" id="teamBLogo">
+      <span class="pp-badge">PP</span>
+    </div>
     <div class="team-info">
       <div class="team-name" id="teamBName"></div>
       <div class="shots" id="teamBShots"></div>
@@ -158,16 +220,27 @@ async function refresh() {
     const res = await fetch(DATA_URL + "?t=" + Date.now()); // prevent caching
     const data = await res.json();
 
-    // Team data
+    // Team A data
     document.getElementById("teamALogo").src = data.teamALogo;
     document.getElementById("teamAName").innerText = data.teamAName;
     document.getElementById("teamAShots").innerText = `Shots: ${data.teamAShots}`;
     document.getElementById("teamAcard").style.backgroundColor = data.teamAColor + "33";
+    
+    // Evaluate and toggle styling targets for Team A (Card + Logo Container)
+    const isTeamAPP = data.teamA_pp === true || data.teamA_pp === "true" || data.teamA_pp === "TRUE";
+    document.getElementById('teamAcard').classList.toggle('active', isTeamAPP);
+    document.getElementById('teamAContainer').classList.toggle('active', isTeamAPP);
 
+    // Team B data
     document.getElementById("teamBLogo").src = data.teamBLogo;
     document.getElementById("teamBName").innerText = data.teamBName;
     document.getElementById("teamBShots").innerText = `Shots: ${data.teamBShots}`;
     document.getElementById("teamBcard").style.backgroundColor = data.teamBColor + "33";
+    
+    // Evaluate and toggle styling targets for Team B (Card + Logo Container)
+    const isTeamBPP = data.teamB_pp === true || data.teamB_pp === "true" || data.teamB_pp === "TRUE";
+    document.getElementById('teamBcard').classList.toggle('active', isTeamBPP);
+    document.getElementById('teamBContainer').classList.toggle('active', isTeamBPP);
 
     document.getElementById("scoreA").innerText = data.teamAScore;
     document.getElementById("scoreB").innerText = data.teamBScore;
